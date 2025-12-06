@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.12](https://github.com/snomiao/keyv-cache-proxy/compare/v0.0.11...v0.0.12) (2025-12-06)
+
+
+### Features
+
+* **index.ts:** add hot option to KeyvCacheProxy and implement globalThisCached utility function for caching asynchronous computations ([8467078](https://github.com/snomiao/keyv-cache-proxy/commit/84670784f2804df74554e55b21752db418f1ef82))
+
 ### [0.0.11](https://github.com/snomiao/keyv-cache-proxy/compare/v0.0.10...v0.0.11) (2025-12-06)
 
 ### [0.0.10](https://github.com/snomiao/keyv-cache-proxy/compare/v0.0.9...v0.0.10) (2025-12-06)
