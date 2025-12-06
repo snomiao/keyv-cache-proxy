@@ -30,7 +30,7 @@ import type { KeyvStoreAdapter } from "keyv";
  *   onCache: (key, value) => value ? console.log(`Cache hit: ${key}`) : console.log(`Cache miss: ${key}`),
  *   onFetch: (key, value) => console.log(`Fetched fresh: ${key}`),
  * })(new Octokit());
- *r
+ *
  * // first call - cache miss, fetches fresh data
  * await gh.repos.get({ owner: "snomiao", repo: "snomiao" });
  * // prints: Cache miss: api.repos.get:[{"owner":"snomiao","repo":"snomiao"}]
@@ -86,7 +86,6 @@ export default function KeyvCacheProxy(options: {
   onCache?: (key: string, value: any) => Promise<any> | any;
   onFetch?: (key: string, value: any) => Promise<any> | any;
   prefix?: string;
-  hot?: boolean;
 }) {
   const { store, ttl, onCache, onFetch, prefix = "" } = options;
 
