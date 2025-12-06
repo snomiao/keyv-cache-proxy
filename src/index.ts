@@ -52,6 +52,7 @@ export default function KeyvCacheProxy(options: {
 	onMiss?: (key: string) => void;
 	onHit?: (key: string) => void;
 	prefix?: string;
+	hot?: boolean;
 }) {
 	const { store, ttl, onMiss, onHit, prefix = "" } = options;
 
@@ -91,10 +92,43 @@ export default function KeyvCacheProxy(options: {
 			},
 		}) as DeepAsyncMethod<T>;
 }
+
 export type DeepAsyncMethod<T> = {
 	[K in keyof T]: T[K] extends (...args: infer A) => infer R
-		? (...args: A) => Promise<Awaited<R>>
-		: T[K] extends object
-			? DeepAsyncMethod<T[K]>
-			: T[K];
+	? (...args: A) => Promise<Awaited<R>>
+	: T[K] extends object
+	? DeepAsyncMethod<T[K]>
+	: T[K];
 };
+
+/**
+ * utils: globalThisCached
+ * A utility function that caches the result of an asynchronous computation in the globalThis object.
+ * It uses a Map stored on globalThis to cache results based on a provided key.
+ * Handy when run with bun --hot
+ *
+ * @param key - The key to identify the cached result.
+ * @param compute - An asynchronous function that computes the value to be cached.
+ *
+ * @returns The cached result if available; otherwise, it computes the result, caches it, and returns it.
+ *
+ * @example
+ * ```ts
+ * const result = await globalThisCached("keyv", async () => new Keyv());
+ * ```
+ */
+export function globalThisCached<T>(name: string, compute: () => T | Promise<T>): Promise<T> {
+	const g = globalThis as typeof globalThis & {
+		__keyv_cache_proxy_global_cache__?: Map<string, unknown>;
+	};
+	g.__keyv_cache_proxy_global_cache__ ??= new Map();
+
+	const cache = g.__keyv_cache_proxy_global_cache__;
+	if (cache.has(name)) {
+		return cache.get(name) as Promise<T>;
+	} else {
+		const result = Promise.resolve(compute());
+		cache.set(name, result);
+		return result;
+	}
+}
