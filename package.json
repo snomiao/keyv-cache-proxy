@@ -1,6 +1,6 @@
 {
 	"name": "keyv-cache-proxy",
-	"version": "0.0.6",
+	"version": "0.0.7",
 	"description": "A transparent caching proxy for any object using Keyv - automatically cache method calls with TTL support",
 	"type": "module",
 	"main": "./dist/index.js",
