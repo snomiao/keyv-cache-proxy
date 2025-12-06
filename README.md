@@ -35,7 +35,6 @@ const store = new Keyv();
 // Wrap any object with caching
 const cachedAPI = KeyvCacheProxy({
   store,
-  ttl: 600000, // 10 minutes
 })(yourAPIClient);
 
 // All method calls are now automatically cached!
@@ -90,6 +89,56 @@ const gh = KeyvCacheProxy({
 
 // API calls are now cached
 const repo = await gh.repos.get({ owner: 'snomiao', repo: 'keyv-cache-proxy' });
+```
+
+### With Notion API
+
+```typescript
+import { Client } from '@notionhq/client';
+import { KeyvCacheProxy } from 'keyv-cache-proxy';
+import Keyv from 'keyv';
+
+const notion = new Client({ auth: process.env.NOTION_API_KEY });
+
+// Cache Notion API calls to reduce rate limiting
+const cachedNotion = KeyvCacheProxy({
+  store: new Keyv(),
+  ttl: 300000, // 5 minutes
+  prefix: 'notion.',
+})(notion);
+
+// These calls will be cached
+const database = await cachedNotion.databases.query({
+  database_id: 'your-database-id',
+});
+
+const page = await cachedNotion.pages.retrieve({
+  page_id: 'your-page-id',
+});
+```
+
+### With Slack API
+
+```typescript
+import { WebClient } from '@slack/web-api';
+import { KeyvCacheProxy } from 'keyv-cache-proxy';
+import Keyv from 'keyv';
+
+const slack = new WebClient(process.env.SLACK_TOKEN);
+
+// Cache Slack API calls
+const cachedSlack = KeyvCacheProxy({
+  store: new Keyv(),
+  ttl: 600000, // 10 minutes
+  prefix: 'slack.',
+})(slack);
+
+// Cached API calls
+const channels = await cachedSlack.conversations.list();
+const userInfo = await cachedSlack.users.info({ user: 'U123456' });
+const messages = await cachedSlack.conversations.history({
+  channel: 'C123456',
+});
 ```
 
 ### With Custom Storage Backends
