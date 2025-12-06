@@ -1,4 +1,5 @@
 import type Keyv from "keyv";
+import type { KeyvStoreAdapter } from "keyv";
 /**
  * KeyvCacheProxy
  * A proxy wrapper that adds caching capabilities to an object's asynchronous methods using a Keyv store.
@@ -46,7 +47,7 @@ import type Keyv from "keyv";
  *
  */
 export default function KeyvCacheProxy(options: {
-	store: Keyv;
+	store: Keyv | KeyvStoreAdapter | Map<any, any>;
 	ttl?: number;
 	onMiss?: (key: string) => void;
 	onHit?: (key: string) => void;
@@ -60,7 +61,7 @@ export default function KeyvCacheProxy(options: {
 				// handle wrap method calls with caching
 				const val = target[prop as keyof T];
 				if (typeof val === "function") {
-					const method = (val as Function).bind(obj);
+					const method = val.bind(obj);
 					return async (...args: any[]) => {
 						const key = `${prefix}${String(prop)}:${JSON.stringify(args)}`;
 						const cached = await store.get(key);
@@ -70,7 +71,6 @@ export default function KeyvCacheProxy(options: {
 						}
 						onMiss?.(key);
 						const result = await method(...args);
-						// const result = await (val as Function).apply(this, args);
 
 						await store.set(key, result, ttl);
 						return result;
