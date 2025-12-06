@@ -235,11 +235,18 @@ Creates a cache proxy factory function.
 
 #### Options
 
-- `store` (required): A Keyv instance for cache storage
-- `ttl` (optional): Time-to-live in milliseconds for cached values
-- `prefix` (optional): Prefix for cache keys (default: `""`)
-- `onCache` (optional): Hook called on **every invocation** (before cache lookup). Receives cached value (or `undefined` on cache miss). Can modify the cached value or return `null` to force refetch: `(key: string, value: any) => any | null | Promise<any | null>`
-- `onFetch` (optional): Hook called when data is freshly fetched (cache miss). Can modify the value before caching: `(key: string, value: any) => any | Promise<any>`
+- **`store`** (required): A Keyv instance for cache storage
+- **`ttl`** (optional): Time-to-live for cached entries in milliseconds
+- **`prefix`** (optional): Prefix for cache keys (default: `""`)
+- **`onCache`** (optional): Hook called on **every invocation**. Receives key and cached value (or `undefined` on cache miss).
+  - Return `null` → Treat as cache miss and refetch
+  - Return `undefined` → Use original cached value
+  - Return modified value → Use that instead
+  - Signature: `(key: string, value: any) => any | null | Promise<any | null>`
+- **`onFetch`** (optional): Hook called when data is freshly fetched (cache miss). Receives key and fetched value.
+  - Return `undefined` → Cache original fetched value
+  - Return modified value → Cache that instead
+  - Signature: `(key: string, value: any) => any | Promise<any>`
 
 #### Returns
 
