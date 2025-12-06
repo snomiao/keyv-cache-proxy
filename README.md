@@ -83,8 +83,8 @@ const gh = KeyvCacheProxy({
   store: kv,
   ttl: 600000, // 10 minutes
   prefix: 'github.',
-  onCache: (key, value) => console.log('Cache hit:', key),
-  onFetch: (key, value) => console.log('Fetched fresh:', key),
+  onCached: (key, value) => console.log('Cache hit:', key),
+  onFetched: (key, value) => console.log('Fetched fresh:', key),
 })(new Octokit().rest);
 
 // API calls are now cached
@@ -179,11 +179,11 @@ let fetches = 0;
 const cached = KeyvCacheProxy({
   store: new Keyv(),
   ttl: 60000,
-  onCache: (key, value) => {
+  onCached: (key, value) => {
     hits++;
     console.log(`Cache hit for ${key}. Total hits: ${hits}`);
   },
-  onFetch: (key, value) => {
+  onFetched: (key, value) => {
     fetches++;
     console.log(`Fetched fresh for ${key}. Total fetches: ${fetches}`);
   },
@@ -197,14 +197,14 @@ const cached = KeyvCacheProxy({
   store: new Keyv(),
   ttl: 60000,
   // Add metadata to cached data (called on every invocation)
-  onCache: (key, value) => {
+  onCached: (key, value) => {
     if (value !== undefined) {
       console.log('Returning cached data');
       return { ...value, fromCache: true, cachedAt: Date.now() };
     }
   },
   // Transform fetched data before caching
-  onFetch: (key, value) => {
+  onFetched: (key, value) => {
     console.log('Processing fresh data');
     return { ...value, fetchedAt: Date.now(), processed: true };
   },
@@ -217,7 +217,7 @@ Force cache refresh:
 const cached = KeyvCacheProxy({
   store: new Keyv(),
   ttl: 60000,
-  onCache: (key, value) => {
+  onCached: (key, value) => {
     // Return null to force refetch even if cached
     if (value && isStale(value)) {
       return null; // Forces cache miss and refetch
@@ -238,12 +238,12 @@ Creates a cache proxy factory function.
 - **`store`** (required): A Keyv instance for cache storage
 - **`ttl`** (optional): Time-to-live for cached entries in milliseconds
 - **`prefix`** (optional): Prefix for cache keys (default: `""`)
-- **`onCache`** (optional): Hook called on **every invocation**. Receives key and cached value (or `undefined` on cache miss).
+- **`onCached`** (optional): Hook called on **every invocation**. Receives key and cached value (or `undefined` on cache miss).
   - Return `null` → Treat as cache miss and refetch
   - Return `undefined` → Use original cached value
   - Return modified value → Use that instead
   - Signature: `(key: string, value: any) => any | null | Promise<any | null>`
-- **`onFetch`** (optional): Hook called when data is freshly fetched (cache miss). Receives key and fetched value.
+- **`onFetched`** (optional): Hook called when data is freshly fetched (cache miss). Receives key and fetched value.
   - Return `undefined` → Cache original fetched value
   - Return modified value → Cache that instead
   - Signature: `(key: string, value: any) => any | Promise<any>`

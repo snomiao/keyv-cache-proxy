@@ -79,38 +79,38 @@ describe("KeyvCacheProxy", () => {
     });
   });
 
-  describe("Hooks - onCache", () => {
-    test("should call onCache hook on every invocation", async () => {
-      const onCacheCalls: Array<{ key: string; value: any }> = [];
+  describe("Hooks - onCached", () => {
+    test("should call onCached hook on every invocation", async () => {
+      const onCachedCalls: Array<{ key: string; value: any }> = [];
       const obj = {
         getValue: (x: number) => x * 2,
       };
 
       const cached = KeyvCacheProxy({
         store,
-        onCache: (key, value) => {
-          onCacheCalls.push({ key, value });
+        onCached: (key, value) => {
+          onCachedCalls.push({ key, value });
         },
       })(obj);
 
-      await cached.getValue(5); // First call - cache miss, onCache called with undefined
-      expect(onCacheCalls.length).toBe(1);
-      expect(onCacheCalls[0]?.value).toBe(undefined);
+      await cached.getValue(5); // First call - cache miss, onCached called with undefined
+      expect(onCachedCalls.length).toBe(1);
+      expect(onCachedCalls[0]?.value).toBe(undefined);
 
-      await cached.getValue(5); // Second call - cache hit, onCache called with cached value
-      expect(onCacheCalls.length).toBe(2);
-      expect(onCacheCalls[1]?.value).toBe(10);
-      expect(onCacheCalls[1]?.key).toContain("getValue");
+      await cached.getValue(5); // Second call - cache hit, onCached called with cached value
+      expect(onCachedCalls.length).toBe(2);
+      expect(onCachedCalls[1]?.value).toBe(10);
+      expect(onCachedCalls[1]?.key).toContain("getValue");
     });
 
-    test("should allow onCache to modify cached value", async () => {
+    test("should allow onCached to modify cached value", async () => {
       const obj = {
         getData: () => ({ value: 100 }),
       };
 
       const cached = KeyvCacheProxy({
         store,
-        onCache: (_key, value) => {
+        onCached: (_key, value) => {
           // Only modify if value exists (cache hit)
           if (value !== undefined) {
             return { ...value, fromCache: true };
@@ -125,14 +125,14 @@ describe("KeyvCacheProxy", () => {
       expect(result2).toMatchObject({ value: 100, fromCache: true });
     });
 
-    test("should return original value if onCache returns undefined", async () => {
+    test("should return original value if onCached returns undefined", async () => {
       const obj = {
         getValue: () => 42,
       };
 
       const cached = KeyvCacheProxy({
         store,
-        onCache: (_key, _value) => {
+        onCached: (_key, _value) => {
           // Return undefined to keep original
           return undefined;
         },
@@ -143,14 +143,14 @@ describe("KeyvCacheProxy", () => {
       expect(result).toBe(42);
     });
 
-    test("should support async onCache hook", async () => {
+    test("should support async onCached hook", async () => {
       const obj = {
         getValue: () => 100,
       };
 
       const cached = KeyvCacheProxy({
         store,
-        onCache: async (_key, value) => {
+        onCached: async (_key, value) => {
           await new Promise((resolve) => setTimeout(resolve, 10));
           // Only modify on cache hit
           if (value !== undefined) {
@@ -164,7 +164,7 @@ describe("KeyvCacheProxy", () => {
       expect(result).toBe(200);
     });
 
-    test("should force cache miss when onCache returns null", async () => {
+    test("should force cache miss when onCached returns null", async () => {
       let fetchCount = 0;
       const obj = {
         getValue: () => {
@@ -175,7 +175,7 @@ describe("KeyvCacheProxy", () => {
 
       const cached = KeyvCacheProxy({
         store,
-        onCache: (_key, value) => {
+        onCached: (_key, value) => {
           // Return null to force refetch even if cached
           if (value !== undefined) {
             return null; // Force cache miss
@@ -192,37 +192,37 @@ describe("KeyvCacheProxy", () => {
     });
   });
 
-  describe("Hooks - onFetch", () => {
-    test("should call onFetch hook on cache miss", async () => {
-      const onFetchCalls: Array<{ key: string; value: any }> = [];
+  describe("Hooks - onFetched", () => {
+    test("should call onFetched hook on cache miss", async () => {
+      const onFetchedCalls: Array<{ key: string; value: any }> = [];
       const obj = {
         getValue: (x: number) => x * 2,
       };
 
       const cached = KeyvCacheProxy({
         store,
-        onFetch: (key, value) => {
-          onFetchCalls.push({ key, value });
+        onFetched: (key, value) => {
+          onFetchedCalls.push({ key, value });
         },
       })(obj);
 
       await cached.getValue(5);
-      expect(onFetchCalls.length).toBe(1);
-      expect(onFetchCalls[0]?.value).toBe(10);
-      expect(onFetchCalls[0]?.key).toContain("getValue");
+      expect(onFetchedCalls.length).toBe(1);
+      expect(onFetchedCalls[0]?.value).toBe(10);
+      expect(onFetchedCalls[0]?.key).toContain("getValue");
 
       await cached.getValue(5); // Cache hit - no fetch
-      expect(onFetchCalls.length).toBe(1);
+      expect(onFetchedCalls.length).toBe(1);
     });
 
-    test("should allow onFetch to modify value before caching", async () => {
+    test("should allow onFetched to modify value before caching", async () => {
       const obj = {
         getData: () => ({ value: 100 }),
       };
 
       const cached = KeyvCacheProxy({
         store,
-        onFetch: (_key, value) => {
+        onFetched: (_key, value) => {
           return { ...value, fetchedAt: Date.now() };
         },
       })(obj);
@@ -236,14 +236,14 @@ describe("KeyvCacheProxy", () => {
       expect(result2).toEqual(result1);
     });
 
-    test("should support async onFetch hook", async () => {
+    test("should support async onFetched hook", async () => {
       const obj = {
         getValue: () => 50,
       };
 
       const cached = KeyvCacheProxy({
         store,
-        onFetch: async (_key, value) => {
+        onFetched: async (_key, value) => {
           await new Promise((resolve) => setTimeout(resolve, 10));
           return value * 3;
         },
@@ -253,7 +253,7 @@ describe("KeyvCacheProxy", () => {
       expect(result).toBe(150);
     });
 
-    test("should cache modified value from onFetch", async () => {
+    test("should cache modified value from onFetched", async () => {
       let callCount = 0;
       const obj = {
         getValue: () => {
@@ -264,7 +264,7 @@ describe("KeyvCacheProxy", () => {
 
       const cached = KeyvCacheProxy({
         store,
-        onFetch: (_key, value) => value * 10,
+        onFetched: (_key, value) => value * 10,
       })(obj);
 
       const result1 = await cached.getValue();
@@ -273,6 +273,39 @@ describe("KeyvCacheProxy", () => {
       const result2 = await cached.getValue();
       expect(result2).toBe(100);
       expect(callCount).toBe(1); // Only called once
+    });
+
+    test("should skip caching when onFetched returns null", async () => {
+      let callCount = 0;
+      const obj = {
+        getValue: (x: number) => {
+          callCount++;
+          return x * 2;
+        },
+      };
+
+      const cached = KeyvCacheProxy({
+        store,
+        onFetched: (_key, value) => {
+          // Return null to skip caching
+          return null;
+        },
+      })(obj);
+
+      // First call - fetch fresh
+      const result1 = await cached.getValue(5);
+      expect(result1).toBe(10);
+      expect(callCount).toBe(1);
+
+      // Second call - should fetch again because nothing was cached
+      const result2 = await cached.getValue(5);
+      expect(result2).toBe(10);
+      expect(callCount).toBe(2); // Should call original method again
+
+      // Verify nothing was cached
+      const key = "getValue(5)";
+      const cachedValue = await store.get(key);
+      expect(cachedValue).toBeUndefined();
     });
   });
 
@@ -285,23 +318,23 @@ describe("KeyvCacheProxy", () => {
 
       const cached = KeyvCacheProxy({
         store,
-        onCache: (_key, value) => {
+        onCached: (_key, value) => {
           hookCalls.push("cache");
           return value;
         },
-        onFetch: (_key, value) => {
+        onFetched: (_key, value) => {
           hookCalls.push("fetch");
           return value;
         },
       })(obj);
 
-      await cached.getValue(1); // cache miss: onCache(undefined), then onFetch
+      await cached.getValue(1); // cache miss: onCached(undefined), then onFetched
       expect(hookCalls).toEqual(["cache", "fetch"]);
 
-      await cached.getValue(1); // cache hit: onCache(value)
+      await cached.getValue(1); // cache hit: onCached(value)
       expect(hookCalls).toEqual(["cache", "fetch", "cache"]);
 
-      await cached.getValue(2); // cache miss: onCache(undefined), then onFetch
+      await cached.getValue(2); // cache miss: onCached(undefined), then onFetched
       expect(hookCalls).toEqual(["cache", "fetch", "cache", "cache", "fetch"]);
     });
 
@@ -312,13 +345,13 @@ describe("KeyvCacheProxy", () => {
 
       const cached = KeyvCacheProxy({
         store,
-        onCache: (_key, value) => {
+        onCached: (_key, value) => {
           // Only modify on cache hit
           if (value !== undefined) {
             return { ...value, fromCache: true };
           }
         },
-        onFetch: (_key, value) => ({ ...value, fromFetch: true }),
+        onFetched: (_key, value) => ({ ...value, fromFetch: true }),
       })(obj);
 
       const result1 = await cached.getValue();
@@ -366,7 +399,7 @@ describe("KeyvCacheProxy", () => {
 
       const cached = KeyvCacheProxy({
         store,
-        onFetch: (key) => {
+        onFetched: (key) => {
           hookCalls.push(key);
         },
       })(obj);
@@ -413,7 +446,7 @@ describe("KeyvCacheProxy", () => {
       const cached = KeyvCacheProxy({
         store,
         prefix: "myapp:",
-        onFetch: (key) => {
+        onFetched: (key) => {
           keys.push(key);
         },
       })(obj);
@@ -433,13 +466,13 @@ describe("KeyvCacheProxy", () => {
       const cached = KeyvCacheProxy({
         store,
         prefix: "app:",
-        onFetch: (key) => {
+        onFetched: (key) => {
           keys.push(key);
         },
       })(obj);
 
       await cached.api.getData();
-      expect(keys[0]).toBe("app:api.getData:[]");
+      expect(keys[0]).toBe("app:api.getData()");
     });
   });
 
@@ -580,7 +613,7 @@ describe("KeyvCacheProxy", () => {
 
       const cached = KeyvCacheProxy({
         store,
-        onFetch: () => {
+        onFetched: () => {
           throw new Error("Hook error");
         },
       })(obj);

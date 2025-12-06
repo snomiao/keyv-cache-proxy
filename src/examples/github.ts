@@ -15,13 +15,13 @@ const kv = new Keyv({ ttl: 600e3 }); // 10 minutes TTL
 const gh = KeyvCacheProxy({
   store: kv,
   prefix: `github.`,
-  onCache: (key: string, value: any) => {
+  onCached: (key: string, value: any) => {
     if (value !== undefined) {
       console.log(`Cache hit: ${key}`);
     }
     return value;
   },
-  onFetch: (key: string, value: any) => {
+  onFetched: (key: string, value: any) => {
     console.log(`Cache miss (fetching): ${key}`);
     return value;
   },

@@ -7,8 +7,8 @@ import type { KeyvStoreAdapter } from "keyv";
  *
  * @param store - An instance of Keyv to use as the cache store.
  * @param ttl - Time-to-live for cached entries in milliseconds.
- * @param onCache - Optional hook called when data is loaded from cache. Receives key and cached value, can return modified value.
- * @param onFetch - Optional hook called when data is freshly fetched. Receives key and fetched value, can return modified value before caching.
+ * @param onCached - Optional hook called when data is loaded from cache. Receives key and cached value, can return modified value.
+ * @param onFetched - Optional hook called when data is freshly fetched. Receives key and fetched value, can return modified value before caching.
  * @param prefix - Optional prefix to prepend to cache keys.
  *
  * @returns A proxy-wrapped version of the input object with caching applied to its asynchronous methods.
@@ -27,8 +27,8 @@ import type { KeyvStoreAdapter } from "keyv";
  *   ttl: 600e3,
  *   prefix: `api.`,
  *   // hooks for logging
- *   onCache: (key, value) => value ? console.log(`Cache hit: ${key}`) : console.log(`Cache miss: ${key}`),
- *   onFetch: (key, value) => console.log(`Fetched fresh: ${key}`),
+ *   onCached: (key, value) => value ? console.log(`Cache hit: ${key}`) : console.log(`Cache miss: ${key}`),
+ *   onFetched: (key, value) => console.log(`Fetched fresh: ${key}`),
  * })(new Octokit());
  *
  * // first call - cache miss, fetches fresh data
@@ -49,14 +49,14 @@ import type { KeyvStoreAdapter } from "keyv";
  *   store: kv,
  *   ttl: 600e3,
  *   // Modify cached data before returning (called on every invocation)
- *   onCache: (key, value) => {
+ *   onCached: (key, value) => {
  *     if (value !== undefined) {
  *       console.log(`Using cached data for ${key}`);
  *       return { ...value, fromCache: true };
  *     }
  *   },
  *   // Transform fetched data before caching
- *   onFetch: (key, value) => {
+ *   onFetched: (key, value) => {
  *     console.log(`Caching fresh data for ${key}`);
  *     return { ...value, fetchedAt: Date.now() };
  *   },
@@ -65,12 +65,12 @@ import type { KeyvStoreAdapter } from "keyv";
  *
  * @example
  *
- * Force cache refresh by returning null from onCache
+ * Force cache refresh by returning null from onCached
  * ```ts
  * const gh = KeyvCacheProxy({
  *   store: kv,
  *   ttl: 600e3,
- *   onCache: (key, value) => {
+ *   onCached: (key, value) => {
  *     // Return null to force refetch even if cached
  *     if (shouldRefresh(value)) {
  *       return null; // Forces cache miss
@@ -91,17 +91,18 @@ export default function KeyvCacheProxy(options: {
    * Returns undefined to use original cached value.
    * Returns modified value to use that instead.
    */
-  onCache?: (key: string, value: any) => Promise<any> | any;
+  onCached?: (key: string, value: any) => Promise<any> | any;
   /**
    * Called when data is freshly fetched. Receives key and fetched value, can return modified value before caching.
    * Returns undefined to use original fetched value.
    * Returns modified value to cache that instead.
+   * Returns null to skip caching (but still return the fetched value).
    */
-  onFetch?: (key: string, value: any) => Promise<any> | any;
+  onFetched?: (key: string, value: any) => Promise<any> | any;
   /** Prefix of keys */
   prefix?: string;
 }) {
-  const { store, ttl, onCache, onFetch, prefix = "" } = options;
+  const { store, ttl, onCached, onFetched, prefix = "" } = options;
 
   return <T extends object>(obj: T): DeepAsyncMethod<T> =>
     new Proxy(obj, {
@@ -115,8 +116,8 @@ export default function KeyvCacheProxy(options: {
 
             // Check cache
             let cached = await store.get(key);
-            if (onCache) {
-              const modified = await onCache(key, cached);
+            if (onCached) {
+              const modified = await onCached(key, cached);
               if (modified === null) {
                 cached = undefined; // treat null as cache miss
               } else if (modified !== undefined) {
@@ -124,18 +125,21 @@ export default function KeyvCacheProxy(options: {
               } // else return original cached value
             }
             if (cached !== undefined) {
-              // onCache hook - can modify cached value before returning
+              // onCached hook - can modify cached value before returning
               return cached;
             }
 
             // Fetch fresh data
             let result = await method(...args); // call original method
 
-            // onFetch hook - can modify result before caching
-            if (onFetch) {
-              // call onFetch hook, can modify result before caching
-              const modified = await onFetch(key, result);
-              if (modified !== undefined) {
+            // onFetched hook - can modify result before caching
+            if (onFetched) {
+              // call onFetched hook, can modify result before caching
+              const modified = await onFetched(key, result);
+              if (modified === null) {
+                // null means skip caching, but still return the fetched value
+                return result;
+              } else if (modified !== undefined) {
                 result = modified;
               }
             }
@@ -149,8 +153,8 @@ export default function KeyvCacheProxy(options: {
           return KeyvCacheProxy({
             store,
             ttl,
-            onCache,
-            onFetch,
+            onCached,
+            onFetched,
             prefix: `${prefix}${String(prop)}.`,
           })(val);
         }
