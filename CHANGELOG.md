@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.2.0](https://github.com/snomiao/keyv-cache-proxy/compare/v0.1.3...v0.2.0) (2025-12-06)
+
+
+### ⚠ BREAKING CHANGES
+
+* Cache key format changed
+- Old format: `prefix.method:["arg1","arg2"]`
+- New format: `prefix.method("arg1","arg2")`
+- More readable and follows function call syntax
+- Existing cache keys will not match after upgrade
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+
+### Features
+
+* enhance hook signatures with structured return types ([c0565b2](https://github.com/snomiao/keyv-cache-proxy/commit/c0565b21082d14f75b8517871d548d2a7bb25480))
+
+
+* change cache key format from colon to function call syntax ([6491338](https://github.com/snomiao/keyv-cache-proxy/commit/6491338d2618f4fbb4f6e31b79dd7a67db279032))
+
 ### [0.1.3](https://github.com/snomiao/keyv-cache-proxy/compare/v0.1.2...v0.1.3) (2025-12-06)
 
 ### [0.1.2](https://github.com/snomiao/keyv-cache-proxy/compare/v0.1.1...v0.1.2) (2025-12-06)
