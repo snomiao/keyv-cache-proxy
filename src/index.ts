@@ -117,7 +117,10 @@ export type DeepAsyncMethod<T> = {
  * const result = await globalThisCached("keyv", async () => new Keyv());
  * ```
  */
-export function globalThisCached<T>(name: string, compute: () => T | Promise<T>): Promise<T> {
+export function globalThisCached<T>(
+	name: string,
+	compute: () => T,
+): T {
 	const g = globalThis as typeof globalThis & {
 		__keyv_cache_proxy_global_cache__?: Map<string, unknown>;
 	};
@@ -125,9 +128,9 @@ export function globalThisCached<T>(name: string, compute: () => T | Promise<T>)
 
 	const cache = g.__keyv_cache_proxy_global_cache__;
 	if (cache.has(name)) {
-		return cache.get(name) as Promise<T>;
+		return cache.get(name) as T;
 	} else {
-		const result = Promise.resolve(compute());
+		const result = compute();
 		cache.set(name, result);
 		return result;
 	}
