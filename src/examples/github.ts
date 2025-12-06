@@ -13,24 +13,28 @@ import KeyvCacheProxy from "../index";
 
 const kv = new Keyv({ ttl: 600e3 }); // 10 minutes TTL
 const gh = KeyvCacheProxy({
-	store: kv,
-	prefix: `github.`,
-	onHit: (key: string) => console.log(`Cache hit: ${key}`),
-	onMiss: (key: string) => console.log(`Cache miss: ${key}`),
+  store: kv,
+  prefix: `github.`,
+  onCache: (key: string, value: any) => {
+    if (value !== undefined) {
+      console.log(`Cache hit: ${key}`);
+    }
+    return value;
+  },
+  onFetch: (key: string, value: any) => {
+    console.log(`Cache miss (fetching): ${key}`);
+    return value;
+  },
 })(
-	new Octokit({
-		// auth
-	}).rest,
+  new Octokit({
+    // auth
+  }).rest,
 );
 
-console.log(
-	(await gh.repos.get({ owner: "snomiao", repo: "snomiao" })).data.html_url,
-);
-// prints: cache miss: github.repos.get:[{"owner":"snomiao","repo":"snomiao"}]
+console.log((await gh.repos.get({ owner: "snomiao", repo: "snomiao" })).data.html_url);
+// prints: cache miss (fetching): github.repos.get:[{"owner":"snomiao","repo":"snomiao"}]
 // returns fresh result
 
-console.log(
-	(await gh.repos.get({ owner: "snomiao", repo: "snomiao" })).data.html_url,
-);
+console.log((await gh.repos.get({ owner: "snomiao", repo: "snomiao" })).data.html_url);
 // prints: cache hit: github.repos.get:[{"owner":"snomiao","repo":"snomiao"}]
 // returns cached result

@@ -8,7 +8,7 @@ A transparent caching proxy for any object using [Keyv](https://github.com/jared
 - ⏱️ **TTL support**: Set time-to-live for cached values
 - 🔑 **Flexible storage**: Use any Keyv-compatible storage adapter
 - 🎯 **Deep proxy**: Automatically handles nested objects
-- 📊 **Cache observability**: Optional callbacks for cache hits and misses
+- 📊 **Cache observability**: Optional hooks for monitoring and modifying cached/fetched data
 - 🔄 **Async-first**: Automatically converts all methods to async
 
 ## Installation
@@ -83,8 +83,8 @@ const gh = KeyvCacheProxy({
   store: kv,
   ttl: 600000, // 10 minutes
   prefix: 'github.',
-  onHit: (key) => console.log('Cache hit:', key),
-  onMiss: (key) => console.log('Cache miss:', key),
+  onCache: (key, value) => console.log('Cache hit:', key),
+  onFetch: (key, value) => console.log('Fetched fresh:', key),
 })(new Octokit().rest);
 
 // API calls are now cached
@@ -168,22 +168,61 @@ const sqliteCache = KeyvCacheProxy({
 })(yourObject);
 ```
 
-### Cache Observability
+### Cache Observability & Data Modification
+
+Track cache performance:
 
 ```typescript
 let hits = 0;
-let misses = 0;
+let fetches = 0;
 
 const cached = KeyvCacheProxy({
   store: new Keyv(),
   ttl: 60000,
-  onHit: (key) => {
+  onCache: (key, value) => {
     hits++;
     console.log(`Cache hit for ${key}. Total hits: ${hits}`);
   },
-  onMiss: (key) => {
-    misses++;
-    console.log(`Cache miss for ${key}. Total misses: ${misses}`);
+  onFetch: (key, value) => {
+    fetches++;
+    console.log(`Fetched fresh for ${key}. Total fetches: ${fetches}`);
+  },
+})(myObject);
+```
+
+Modify cached/fetched data:
+
+```typescript
+const cached = KeyvCacheProxy({
+  store: new Keyv(),
+  ttl: 60000,
+  // Add metadata to cached data (called on every invocation)
+  onCache: (key, value) => {
+    if (value !== undefined) {
+      console.log('Returning cached data');
+      return { ...value, fromCache: true, cachedAt: Date.now() };
+    }
+  },
+  // Transform fetched data before caching
+  onFetch: (key, value) => {
+    console.log('Processing fresh data');
+    return { ...value, fetchedAt: Date.now(), processed: true };
+  },
+})(myObject);
+```
+
+Force cache refresh:
+
+```typescript
+const cached = KeyvCacheProxy({
+  store: new Keyv(),
+  ttl: 60000,
+  onCache: (key, value) => {
+    // Return null to force refetch even if cached
+    if (value && isStale(value)) {
+      return null; // Forces cache miss and refetch
+    }
+    return value; // Use cached value
   },
 })(myObject);
 ```
@@ -197,10 +236,10 @@ Creates a cache proxy factory function.
 #### Options
 
 - `store` (required): A Keyv instance for cache storage
-- `ttl` (required): Time-to-live in milliseconds for cached values
+- `ttl` (optional): Time-to-live in milliseconds for cached values
 - `prefix` (optional): Prefix for cache keys (default: `""`)
-- `onHit` (optional): Callback function called on cache hits `(key: string) => void`
-- `onMiss` (optional): Callback function called on cache misses `(key: string) => void`
+- `onCache` (optional): Hook called on **every invocation** (before cache lookup). Receives cached value (or `undefined` on cache miss). Can modify the cached value or return `null` to force refetch: `(key: string, value: any) => any | null | Promise<any | null>`
+- `onFetch` (optional): Hook called when data is freshly fetched (cache miss). Can modify the value before caching: `(key: string, value: any) => any | Promise<any>`
 
 #### Returns
 
