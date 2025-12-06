@@ -81,10 +81,24 @@ import type { KeyvStoreAdapter } from "keyv";
  * ```
  */
 export default function KeyvCacheProxy(options: {
+  /** Keyv store instance to use for caching */
   store: Keyv | KeyvStoreAdapter | Map<any, any>;
+  /** Time-to-live for cached entries in milliseconds */
   ttl?: number;
+  /**
+   * Called when data is loaded from cache. Receives key and cached value, can return modified value.
+   * Return null to treat as cache miss.
+   * Returns undefined to use original cached value.
+   * Returns modified value to use that instead.
+   */
   onCache?: (key: string, value: any) => Promise<any> | any;
+  /**
+   * Called when data is freshly fetched. Receives key and fetched value, can return modified value before caching.
+   * Returns undefined to use original fetched value.
+   * Returns modified value to cache that instead.
+   */
   onFetch?: (key: string, value: any) => Promise<any> | any;
+  /** Prefix of keys */
   prefix?: string;
 }) {
   const { store, ttl, onCache, onFetch, prefix = "" } = options;
