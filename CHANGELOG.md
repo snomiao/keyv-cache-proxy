@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.2](https://github.com/snomiao/keyv-cache-proxy/compare/v0.1.1...v0.1.2) (2025-12-06)
+
+
+### Bug Fixes
+
+* remove unused hot parameter and fix typo in JSDoc ([e28d100](https://github.com/snomiao/keyv-cache-proxy/commit/e28d1000f707a276dff7fabd83bbbb0352fbd390))
+
 ### [0.1.1](https://github.com/snomiao/keyv-cache-proxy/compare/v0.1.0...v0.1.1) (2025-12-06)
 
 ## [0.1.0](https://github.com/snomiao/keyv-cache-proxy/compare/v0.0.12...v0.1.0) (2025-12-06)
