@@ -19,11 +19,11 @@ const gh = KeyvCacheProxy({
     if (value !== undefined) {
       console.log(`Cache hit: ${key}`);
     }
-    return value;
+    return undefined; // Use cached value as-is
   },
-  onFetched: (key: string, value: any) => {
+  onFetched: (key: string) => {
     console.log(`Cache miss (fetching): ${key}`);
-    return value;
+    return undefined; // Cache the original value
   },
 })(
   new Octokit({

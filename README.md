@@ -200,13 +200,13 @@ const cached = KeyvCacheProxy({
   onCached: (key, value) => {
     if (value !== undefined) {
       console.log('Returning cached data');
-      return { ...value, fromCache: true, cachedAt: Date.now() };
+      return { data: { ...value, fromCache: true, cachedAt: Date.now() } };
     }
   },
   // Transform fetched data before caching
   onFetched: (key, value) => {
     console.log('Processing fresh data');
-    return { ...value, fetchedAt: Date.now(), processed: true };
+    return { data: { ...value, fetchedAt: Date.now(), processed: true } };
   },
 })(myObject);
 ```
@@ -218,11 +218,27 @@ const cached = KeyvCacheProxy({
   store: new Keyv(),
   ttl: 60000,
   onCached: (key, value) => {
-    // Return null to force refetch even if cached
+    // Return { skip: true } to force refetch even if cached
     if (value && isStale(value)) {
-      return null; // Forces cache miss and refetch
+      return { skip: true }; // Forces cache miss and refetch
     }
-    return value; // Use cached value
+    // Return undefined to use cached value
+  },
+})(myObject);
+```
+
+Custom TTL per request:
+
+```typescript
+const cached = KeyvCacheProxy({
+  store: new Keyv(),
+  ttl: 60000, // Default 1 minute
+  onFetched: (key, value) => {
+    // Cache user data longer than other data
+    if (key.includes('user')) {
+      return { data: value, ttl: 3600000 }; // 1 hour
+    }
+    return { data: value }; // Use default TTL
   },
 })(myObject);
 ```
@@ -236,17 +252,20 @@ Creates a cache proxy factory function.
 #### Options
 
 - **`store`** (required): A Keyv instance for cache storage
-- **`ttl`** (optional): Time-to-live for cached entries in milliseconds
+- **`ttl`** (optional): Time-to-live for cached entries in milliseconds (can be overridden per request via `onFetched`)
 - **`prefix`** (optional): Prefix for cache keys (default: `""`)
 - **`onCached`** (optional): Hook called on **every invocation**. Receives key and cached value (or `undefined` on cache miss).
-  - Return `null` → Treat as cache miss and refetch
   - Return `undefined` → Use original cached value
-  - Return modified value → Use that instead
-  - Signature: `(key: string, value: any) => any | null | Promise<any | null>`
+  - Return `{ skip: true }` → Treat as cache miss and refetch
+  - Return `{ data: <value> }` → Return modified cached value
+  - Signature: `(key: string, value: any) => { data?: any } | { skip: true } | undefined | Promise<...>`
 - **`onFetched`** (optional): Hook called when data is freshly fetched (cache miss). Receives key and fetched value.
-  - Return `undefined` → Cache original fetched value
-  - Return modified value → Cache that instead
-  - Signature: `(key: string, value: any) => any | Promise<any>`
+  - Return `undefined` → Cache original fetched value with default TTL
+  - Return `{}` → Cache original fetched value with default TTL (same as undefined)
+  - Return `{ data: <value> }` → Cache modified value
+  - Return `{ data: <value>, ttl: <ms> }` → Cache modified value with custom TTL
+  - Return `{ skip: true }` → Skip caching but still return the fetched value
+  - Signature: `(key: string, value: any) => { data?: any, ttl?: number } | { skip: true } | undefined | Promise<...>`
 
 #### Returns
 

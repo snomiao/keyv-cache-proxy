@@ -90,6 +90,7 @@ describe("KeyvCacheProxy", () => {
         store,
         onCached: (key, value) => {
           onCachedCalls.push({ key, value });
+          return undefined;
         },
       })(obj);
 
@@ -113,7 +114,7 @@ describe("KeyvCacheProxy", () => {
         onCached: (_key, value) => {
           // Only modify if value exists (cache hit)
           if (value !== undefined) {
-            return { ...value, fromCache: true };
+            return { data: { ...value, fromCache: true } };
           }
         },
       })(obj);
@@ -154,7 +155,7 @@ describe("KeyvCacheProxy", () => {
           await new Promise((resolve) => setTimeout(resolve, 10));
           // Only modify on cache hit
           if (value !== undefined) {
-            return value * 2;
+            return { data: value * 2 };
           }
         },
       })(obj);
@@ -164,7 +165,7 @@ describe("KeyvCacheProxy", () => {
       expect(result).toBe(200);
     });
 
-    test("should force cache miss when onCached returns null", async () => {
+    test("should force cache miss when onCached returns skip", async () => {
       let fetchCount = 0;
       const obj = {
         getValue: () => {
@@ -176,9 +177,9 @@ describe("KeyvCacheProxy", () => {
       const cached = KeyvCacheProxy({
         store,
         onCached: (_key, value) => {
-          // Return null to force refetch even if cached
+          // Return { skip: true } to force refetch even if cached
           if (value !== undefined) {
-            return null; // Force cache miss
+            return { skip: true }; // Force cache miss
           }
         },
       })(obj);
@@ -203,6 +204,7 @@ describe("KeyvCacheProxy", () => {
         store,
         onFetched: (key, value) => {
           onFetchedCalls.push({ key, value });
+          return undefined;
         },
       })(obj);
 
@@ -223,7 +225,7 @@ describe("KeyvCacheProxy", () => {
       const cached = KeyvCacheProxy({
         store,
         onFetched: (_key, value) => {
-          return { ...value, fetchedAt: Date.now() };
+          return { data: { ...value, fetchedAt: Date.now() } };
         },
       })(obj);
 
@@ -245,7 +247,7 @@ describe("KeyvCacheProxy", () => {
         store,
         onFetched: async (_key, value) => {
           await new Promise((resolve) => setTimeout(resolve, 10));
-          return value * 3;
+          return { data: value * 3 };
         },
       })(obj);
 
@@ -264,7 +266,7 @@ describe("KeyvCacheProxy", () => {
 
       const cached = KeyvCacheProxy({
         store,
-        onFetched: (_key, value) => value * 10,
+        onFetched: (_key, value) => ({ data: value * 10 }),
       })(obj);
 
       const result1 = await cached.getValue();
@@ -275,7 +277,7 @@ describe("KeyvCacheProxy", () => {
       expect(callCount).toBe(1); // Only called once
     });
 
-    test("should skip caching when onFetched returns null", async () => {
+    test("should skip caching when onFetched returns skip", async () => {
       let callCount = 0;
       const obj = {
         getValue: (x: number) => {
@@ -286,9 +288,9 @@ describe("KeyvCacheProxy", () => {
 
       const cached = KeyvCacheProxy({
         store,
-        onFetched: (_key, value) => {
-          // Return null to skip caching
-          return null;
+        onFetched: () => {
+          // Return { skip: true } to skip caching
+          return { skip: true };
         },
       })(obj);
 
@@ -348,10 +350,10 @@ describe("KeyvCacheProxy", () => {
         onCached: (_key, value) => {
           // Only modify on cache hit
           if (value !== undefined) {
-            return { ...value, fromCache: true };
+            return { data: { ...value, fromCache: true } };
           }
         },
-        onFetched: (_key, value) => ({ ...value, fromFetch: true }),
+        onFetched: (_key, value) => ({ data: { ...value, fromFetch: true } }),
       })(obj);
 
       const result1 = await cached.getValue();
@@ -401,6 +403,7 @@ describe("KeyvCacheProxy", () => {
         store,
         onFetched: (key) => {
           hookCalls.push(key);
+          return undefined;
         },
       })(obj);
 
@@ -448,6 +451,7 @@ describe("KeyvCacheProxy", () => {
         prefix: "myapp:",
         onFetched: (key) => {
           keys.push(key);
+          return undefined;
         },
       })(obj);
 
@@ -468,6 +472,7 @@ describe("KeyvCacheProxy", () => {
         prefix: "app:",
         onFetched: (key) => {
           keys.push(key);
+          return undefined;
         },
       })(obj);
 
@@ -502,6 +507,37 @@ describe("KeyvCacheProxy", () => {
 
       const result3 = await cached.getValue();
       expect(result3).toBe(2); // Fresh call
+    });
+
+    test("should support custom TTL from onFetched", async () => {
+      let callCount = 0;
+      const obj = {
+        getValue: () => {
+          callCount++;
+          return callCount;
+        },
+      };
+
+      const cached = KeyvCacheProxy({
+        store,
+        ttl: 10000, // Default 10s
+        onFetched: (_key, value) => {
+          // Use custom TTL of 100ms
+          return { data: value, ttl: 100 };
+        },
+      })(obj);
+
+      const result1 = await cached.getValue();
+      expect(result1).toBe(1);
+
+      const result2 = await cached.getValue();
+      expect(result2).toBe(1); // Cached
+
+      // Wait for custom TTL to expire (100ms)
+      await new Promise((resolve) => setTimeout(resolve, 150));
+
+      const result3 = await cached.getValue();
+      expect(result3).toBe(2); // Fresh call due to custom TTL
     });
   });
 
