@@ -2,6 +2,37 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.1.0](https://github.com/snomiao/keyv-cache-proxy/compare/v0.0.12...v0.1.0) (2025-12-06)
+
+
+### ⚠ BREAKING CHANGES
+
+* onCache hook behavior changed
+- onCache is now called on EVERY method invocation (not just cache hits)
+- Receives cached value or undefined on cache miss
+- Can return null to force cache miss and refetch
+- Can modify cached value before returning
+
+New features:
+- Added 69 comprehensive tests covering all functionality
+- Added test for forcing cache refresh with null return
+- Added biome.json configuration
+- Updated all examples to reflect new hook behavior
+
+Updated:
+- README.md with new hook behavior and examples
+- src/index.ts with new hook implementation and JSDoc examples
+- src/examples/github.ts to use new hook API
+- All tests updated to match new behavior
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+
+### Features
+
+* update onCache hook to be called on every invocation and add comprehensive tests ([ced194c](https://github.com/snomiao/keyv-cache-proxy/commit/ced194c3f35a6233b778b5508249bf61ec469d7b))
+
 ### [0.0.12](https://github.com/snomiao/keyv-cache-proxy/compare/v0.0.11...v0.0.12) (2025-12-06)
 
 
