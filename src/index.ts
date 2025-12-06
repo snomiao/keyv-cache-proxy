@@ -111,7 +111,7 @@ export default function KeyvCacheProxy(options: {
         if (typeof val === "function") {
           const method = val.bind(obj);
           return async (...args: any[]) => {
-            const key = `${prefix}${String(prop)}:${JSON.stringify(args)}`;
+            const key = `${prefix}${String(prop)}(${args.map((arg) => JSON.stringify(arg)).join(",")})`;
 
             // Check cache
             let cached = await store.get(key);
