@@ -1,5 +1,6 @@
 import type Keyv from "keyv";
 import type { KeyvStoreAdapter } from "keyv";
+
 type Awaitable<T> = T | Promise<T>;
 /**
  * KeyvCacheProxy
@@ -117,7 +118,10 @@ export default function KeyvCacheProxy(options: {
    * Return { data?: <value>, ttl?: <number> } to cache modified value with optional custom TTL.
    * Return { skip: true } to skip caching but still return fetched value.
    */
-  onFetched?: (key: string, value: any) => Awaitable<{ data?: any, ttl?: number } | { skip: true } | undefined>;
+  onFetched?: (
+    key: string,
+    value: any,
+  ) => Awaitable<{ data?: any; ttl?: number } | { skip: true } | undefined>;
   /** Prefix of keys */
   prefix?: string;
 }) {
@@ -137,11 +141,11 @@ export default function KeyvCacheProxy(options: {
             let cached = await store.get(key);
             if (onCached) {
               const modified = await onCached(key, cached);
-              if (modified !== undefined && typeof modified === 'object' && modified !== null) {
-                if ('skip' in modified && modified.skip) {
+              if (modified !== undefined && typeof modified === "object" && modified !== null) {
+                if ("skip" in modified && modified.skip) {
                   // Treat as cache miss
                   cached = undefined;
-                } else if ('data' in modified) {
+                } else if ("data" in modified) {
                   // Return modified data
                   return modified.data;
                 }
@@ -159,16 +163,16 @@ export default function KeyvCacheProxy(options: {
             // onFetched hook - can modify result before caching
             if (onFetched) {
               const modified = await onFetched(key, result);
-              if (modified !== undefined && typeof modified === 'object' && modified !== null) {
-                if ('skip' in modified && modified.skip) {
+              if (modified !== undefined && typeof modified === "object" && modified !== null) {
+                if ("skip" in modified && modified.skip) {
                   // Skip caching, but still return the fetched value
                   return result;
-                } else if ('data' in modified || 'ttl' in modified) {
+                } else if ("data" in modified || "ttl" in modified) {
                   // Use modified data and/or custom TTL
-                  if ('data' in modified && modified.data !== undefined) {
+                  if ("data" in modified && modified.data !== undefined) {
                     result = modified.data;
                   }
-                  if ('ttl' in modified && modified.ttl !== undefined) {
+                  if ("ttl" in modified && modified.ttl !== undefined) {
                     customTtl = modified.ttl;
                   }
                 }
@@ -198,10 +202,10 @@ export default function KeyvCacheProxy(options: {
 
 export type DeepAsyncMethod<T> = {
   [K in keyof T]: T[K] extends (...args: infer A) => infer R
-  ? (...args: A) => Promise<Awaited<R>>
-  : T[K] extends object
-  ? DeepAsyncMethod<T[K]>
-  : T[K];
+    ? (...args: A) => Promise<Awaited<R>>
+    : T[K] extends object
+      ? DeepAsyncMethod<T[K]>
+      : T[K];
 };
 
 /**
