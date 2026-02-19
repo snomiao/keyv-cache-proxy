@@ -319,6 +319,17 @@ You can use any Keyv-compatible storage adapter:
 - **MySQL**: [@keyv/mysql](https://github.com/jaredwray/keyv/tree/main/packages/mysql)
 - **NeDB**: [keyv-nedb-store](https://github.com/snomiao/keyv-nedb-store)
 
+## See Also
+
+Other Keyv storage adapters by the same author:
+
+- [keyv-github](https://github.com/snomiao/keyv-github) — GitHub repository adapter; each key is a file, commits are writes
+- [keyv-sqlite](https://github.com/snomiao/keyv-sqlite) — SQLite storage adapter
+- [keyv-mongodb-store](https://github.com/snomiao/keyv-mongodb-store) — MongoDB storage adapter
+- [keyv-nedb-store](https://github.com/snomiao/keyv-nedb-store) — NeDB embedded file-based adapter
+- [keyv-dir-store](https://github.com/snomiao/keyv-dir-store) — file-per-key directory adapter with TTL via mtime
+- [keyv-nest](https://github.com/snomiao/keyv-nest) — hierarchical multi-layer caching adapter
+
 ## License
 
 MIT © [snomiao](https://github.com/snomiao)
