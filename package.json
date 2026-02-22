@@ -41,10 +41,10 @@
   },
   "homepage": "https://github.com/snomiao/keyv-cache-proxy#readme",
   "devDependencies": {
-    "@biomejs/biome": "^2.3.8",
     "@types/bun": "latest",
     "semantic-release": "^25.0.2",
-    "standard-version": "^9.5.0"
+    "standard-version": "^9.5.0",
+    "oxlint": "latest"
   },
   "peerDependencies": {
     "typescript": "^5.9.3",
@@ -53,9 +53,9 @@
   "dependencies": {},
   "scripts": {
     "build": "tsc",
-    "fmt": "biome check --unsafe --write",
     "prepack": "bun fmt && bun run build",
-    "release": "standard-version && git push --follow-tags && npm publish"
+    "release": "standard-version && git push --follow-tags && npm publish",
+    "fix": "oxlint --fix && oxfmt"
   },
   "engines": {
     "node": ">=18.0.0"
