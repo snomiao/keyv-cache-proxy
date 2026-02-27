@@ -53,9 +53,10 @@
   "dependencies": {},
   "scripts": {
     "build": "tsc",
+    "test": "bun test",
     "prepack": "bun fmt && bun run build",
     "release": "standard-version && git push --follow-tags && npm publish",
-    "fix": "oxlint --fix && oxfmt"
+    "fix": "oxlint --fix"
   },
   "engines": {
     "node": ">=18.0.0"

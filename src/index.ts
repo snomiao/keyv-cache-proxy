@@ -127,8 +127,11 @@ export default function KeyvCacheProxy(options: {
 }) {
   const { store, ttl, onCached, onFetched, prefix = "" } = options;
 
-  return <T extends object>(obj: T): DeepAsyncMethod<T> =>
-    new Proxy(obj, {
+  return <T extends object>(obj: T): DeepAsyncMethod<T> => {
+    // Cache for nested proxies - ensures lazy loading only creates each proxy once
+    const proxyCache = new Map<PropertyKey, any>();
+
+    return new Proxy(obj, {
       get(target, prop, receiver) {
         // handle wrap method calls with caching
         const val = target[prop as keyof T];
@@ -184,20 +187,28 @@ export default function KeyvCacheProxy(options: {
             return result;
           };
         }
-        // deep proxy for nested objects
+        // deep proxy for nested objects - lazy loading with cache
         if (typeof val === "object" && val !== null) {
-          return KeyvCacheProxy({
-            store,
-            ttl,
-            onCached,
-            onFetched,
-            prefix: `${prefix}${String(prop)}.`,
-          })(val);
+          // Check if we've already created a proxy for this property
+          if (!proxyCache.has(prop)) {
+            proxyCache.set(
+              prop,
+              KeyvCacheProxy({
+                store,
+                ttl,
+                onCached,
+                onFetched,
+                prefix: `${prefix}${String(prop)}.`,
+              })(val),
+            );
+          }
+          return proxyCache.get(prop);
         }
         // return property value for non-function properties
         return Reflect.get(target, prop, receiver);
       },
     }) as DeepAsyncMethod<T>;
+  };
 }
 
 // Helper to check if type is primitive or built-in object
