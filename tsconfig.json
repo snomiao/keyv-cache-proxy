@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "types": ["bun", "minimist", "node", "normalize-package-data"],
     // Environment setup & latest features
     "lib": ["ESNext"],
     "target": "ESNext",
