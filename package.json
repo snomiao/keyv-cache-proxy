@@ -42,9 +42,10 @@
   "homepage": "https://github.com/snomiao/keyv-cache-proxy#readme",
   "devDependencies": {
     "@types/bun": "latest",
+    "oxlint": "latest",
     "semantic-release": "^25.0.2",
     "standard-version": "^9.5.0",
-    "oxlint": "latest"
+    "tsrs": "0.25.0-ts7.1.0-beta"
   },
   "peerDependencies": {
     "typescript": "^5.9.3",
@@ -52,7 +53,7 @@
   },
   "dependencies": {},
   "scripts": {
-    "build": "tsc",
+    "build": "tsrs",
     "test": "bun test",
     "prepack": "bun run build",
     "release": "standard-version && git push --follow-tags && npm publish",
